@@ -1,15 +1,19 @@
 package com.pullrefreshlayout;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.TextView;
 
 /**
  * Created by 6a209 on 14/10/19.
@@ -18,7 +22,7 @@ import android.widget.ScrollView;
  *
  *
  */
-public class RefreshLayout extends ViewGroup{
+public abstract class RefreshLayout extends ViewGroup{
 
     private static final String TAG = "PullRefreshLayout";
 
@@ -27,20 +31,27 @@ public class RefreshLayout extends ViewGroup{
     private static final int REFRESHING_STATUS = 0x02;
     private static final int NORMAL_STATUS = 0x03;
 
+    private static final int DEFAULT_HEAD_HEIGHT = 200;
+
     View mTargetView;
     View mRefreshHeaderView;
-    ILoadingLayout mHeadView;
+
+    LinearLayout mContentLy;
 
     private int mCurStatus;
     private float mLastMotionY;
     private float mActionDownY;
     private float mTouchSlop;
     private boolean mIsBeingDragged;
-    private int mHeaderViewHeight;
+    private int mHeaderViewHeight = DEFAULT_HEAD_HEIGHT;
     private int mMediumAnimationDuration;
 
+    private int mToPosition;
+    private int mOriginalOffsetTop;
+
     /** the distance of refresh*/
-    private int mNeedRefreshDeltaY;
+    private int mNeedRefreshDeltaY = 400;
+
 
 
     public interface OnRefreshListener{
@@ -74,49 +85,103 @@ public class RefreshLayout extends ViewGroup{
         super(context, attrs);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
+        mContentLy = new LinearLayout(context);
+        mContentLy.setOrientation(LinearLayout.VERTICAL);
+        mRefreshHeaderView = new TestHeadView(context);
+        mContentLy.addView(mRefreshHeaderView);
+        mTargetView = initTargetView();
+        mContentLy.addView(mTargetView);
+        mTargetView.setBackgroundColor(Color.BLUE);
+
+        addView(mContentLy);
     }
 
-    @Override
-    protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int headHeight = mRefreshHeaderView.getMeasuredHeight();
-        mRefreshHeaderView.layout(l, t - headHeight, r, t);
-        mTargetView.layout(l, t, r, b);
+    public View getTargetView(){
+        return mTargetView;
     }
 
+    protected abstract View initTargetView();
 
-    private final Animation mAnimateToPosition = new Animation() {
 
-        private int mToPosition;
+    private class TestHeadView extends TextView implements ILoadingLayout{
 
-        private int mOriginalOffsetTop;
-
-        public void setToPos(int toPos){
-            mToPosition = toPos;
-        }
-
-        public void setOriginalOffsetTop(int originalOffsetTop){
-            mOriginalOffsetTop = originalOffsetTop;
+        public TestHeadView(Context context) {
+            super(context);
+            setBackgroundColor(Color.RED);
+            setHeight(mHeaderViewHeight);
         }
 
         @Override
+        public void pulltoRefresh() {
+            setText("Pull to Refresh");
+        }
+
+        @Override
+        public void releaseToRefresh() {
+            setText("release to refresh");
+        }
+
+        @Override
+        public void refreshing() {
+            setText("refreshing");
+        }
+
+        @Override
+        public void normal() {
+            setText("normal");
+        }
+    }
+
+    @Override
+    public void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+        int headMeasureSpec = MeasureSpec.makeMeasureSpec(mHeaderViewHeight, MeasureSpec.EXACTLY);
+        mRefreshHeaderView.measure(widthMeasureSpec, headMeasureSpec);
+        mTargetView.measure(widthMeasureSpec, heightMeasureSpec);
+    }
+
+
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        int headHeight = mHeaderViewHeight;
+        mContentLy.layout(l, t - headHeight, r, b);
+//        mRefreshHeaderView.layout(l, t - headHeight, r, t);
+//        mTargetView.layout(l, t, r, b);
+    }
+
+
+    Animation mAnimateToPosition = new Animation() {
+
+
+        @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
+            Log.d("toPosition ==>>", mToPosition + "");
             final int curTop = getCurTop();
+            Log.d("curTop ==>>", curTop + "");
             if(mToPosition == curTop){
                 return;
             }
-            int toTop = (int) (curTop + (mOriginalOffsetTop - curTop) * interpolatedTime);
+            Log.d("the interpolatedTime", "" + interpolatedTime);
+            int toTop = (int) (mOriginalOffsetTop - (mOriginalOffsetTop - mToPosition) * interpolatedTime);
+
             int offset = toTop - curTop;
-            if(offset + curTop < 0){
-                offset = 0 - curTop;
-            }
             setOffsetTopAndBottom(offset);
         }
     };
 
 
+    public void refreshOver(){
+        mAnimateToPosition.reset();
+        mAnimateToPosition.setDuration(mMediumAnimationDuration);
+        mToPosition = -mHeaderViewHeight;
+        mOriginalOffsetTop = getCurTop();
+        mContentLy.startAnimation(mAnimateToPosition);
+
+    }
+
+
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev){
-
         if(!childIsOnTop()){
             return false;
         }
@@ -160,8 +225,9 @@ public class RefreshLayout extends ViewGroup{
                 mIsBeingDragged = false;
                 break;
             case MotionEvent.ACTION_MOVE:
+                Log.d("action_move", ev.getY() + "");
                 final float y = ev.getY();
-                final float yDiff = y - mActionDownY;
+                final float yDiff = y - mLastMotionY;
                 if(!mIsBeingDragged && yDiff > mTouchSlop){
                     mIsBeingDragged = true;
                 }
@@ -183,7 +249,9 @@ public class RefreshLayout extends ViewGroup{
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
-                handleRelease((int) ev.getY());
+
+                Log.d("action_up", ev.getY() + "");
+                handleRelease();
                 break;
             default:
                 break;
@@ -193,29 +261,31 @@ public class RefreshLayout extends ViewGroup{
     }
 
     private int getCurTop(){
-        return getTop();
+        return mContentLy.getTop();
     }
 
 
     private void setOffsetTopAndBottom(int offset){
-        this.offsetTopAndBottom(offset);
+        Log.d("the offset >>> ", offset + "");
+        mContentLy.offsetTopAndBottom(offset);
     }
 
 
-    private void handleRelease(int y){
+    private void handleRelease(){
+        Log.d("handleRelease", "=====");
         int toPostion;
         if(RELEASE_TO_REFRESH_STATUS == mCurStatus){
-            toPostion = mHeaderViewHeight;
-        }else if(PULL_TO_REFRESH_STATUS == mCurStatus){
             toPostion = 0;
+        }else if(PULL_TO_REFRESH_STATUS == mCurStatus){
+            toPostion = -mHeaderViewHeight;
         }else {
             return;
         }
         mAnimateToPosition.reset();
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
-        mAnimateToPosition.setToPos(toPostion);
-        mAnimateToPosition.setOriginalOffsetTop(getCurTop());
-        this.startAnimation(mAnimateToPosition);
+        mToPosition = toPostion;
+        mOriginalOffsetTop = getCurTop();
+        mContentLy.startAnimation(mAnimateToPosition);
     }
 
 
@@ -231,16 +301,16 @@ public class RefreshLayout extends ViewGroup{
         mCurStatus = status;
         switch (mCurStatus){
             case PULL_TO_REFRESH_STATUS:
-                mHeadView.pulltoRefresh();
+                ((ILoadingLayout)mRefreshHeaderView).pulltoRefresh();
                 break;
             case RELEASE_TO_REFRESH_STATUS:
-                mHeadView.releaseToRefresh();
+                ((ILoadingLayout)mRefreshHeaderView).releaseToRefresh();
                 break;
             case REFRESHING_STATUS:
-                mHeadView.refreshing();
+                ((ILoadingLayout)mRefreshHeaderView).refreshing();
                 break;
             case NORMAL_STATUS:
-                mHeadView.normal();
+                ((ILoadingLayout)mRefreshHeaderView).normal();
                 break;
             default:
                 break;

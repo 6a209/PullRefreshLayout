@@ -1,4 +1,5 @@
-apply plugin: 'com.android.application'
+apply plugin: 'android-library'
+apply plugin: 'android-maven'
 
 android {
     compileSdkVersion 20
@@ -19,7 +20,29 @@ android {
     }
 }
 
+
+repositories {
+    mavenCentral()
+}
+
+
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.android.support:recyclerview-v7:21.0.0'
 }
+
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.artifactId = 'lib'
+            pom.groupId = 'com.pullrefreshlayout'
+            pom.version = '0.2-SNAPSHOT'
+            repository(url: "http://maven.mogujie.org/nexus/content/repositories/mitsnapshots/") {
+                authentication(userName: 'mituser', password: 'admin123')
+            }
+        }
+    }
+}
+
+
