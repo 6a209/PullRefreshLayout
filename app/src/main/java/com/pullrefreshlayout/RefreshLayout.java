@@ -50,11 +50,12 @@ public abstract class RefreshLayout extends ViewGroup{
     private int mOriginalOffsetTop;
 
     /** the distance of refresh*/
-    private int mNeedRefreshDeltaY = 400;
+    private int mNeedRefreshDeltaY = 250;
 
 
+    OnRefreshListener mRefreshListener;
 
-    public interface OnRefreshListener{
+    public interface OnRefreshListener {
 
         /**
          * on pull down status
@@ -72,9 +73,12 @@ public abstract class RefreshLayout extends ViewGroup{
          *
          * i suggest in this callback refresh the view data;
          *
-         *
          */
         void onRefreshOver();
+    }
+
+    public void setOnRefreshListener(OnRefreshListener listener){
+       mRefreshListener = listener;
     }
 
     public RefreshLayout(Context context){
@@ -89,7 +93,7 @@ public abstract class RefreshLayout extends ViewGroup{
         mContentLy.setOrientation(LinearLayout.VERTICAL);
         mRefreshHeaderView = new TestHeadView(context);
         mContentLy.addView(mRefreshHeaderView);
-        mTargetView = initTargetView();
+        mTargetView = createTargetView();
         mContentLy.addView(mTargetView);
         mTargetView.setBackgroundColor(Color.BLUE);
 
@@ -100,7 +104,7 @@ public abstract class RefreshLayout extends ViewGroup{
         return mTargetView;
     }
 
-    protected abstract View initTargetView();
+    protected abstract View createTargetView();
 
 
     private class TestHeadView extends TextView implements ILoadingLayout{
@@ -145,8 +149,6 @@ public abstract class RefreshLayout extends ViewGroup{
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
         int headHeight = mHeaderViewHeight;
         mContentLy.layout(l, t - headHeight, r, b);
-//        mRefreshHeaderView.layout(l, t - headHeight, r, t);
-//        mTargetView.layout(l, t, r, b);
     }
 
 
@@ -155,15 +157,17 @@ public abstract class RefreshLayout extends ViewGroup{
 
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
-            Log.d("toPosition ==>>", mToPosition + "");
+//            Log.d("toPosition ==>>", mToPosition + "");
             final int curTop = getCurTop();
-            Log.d("curTop ==>>", curTop + "");
+//            Log.d("curTop ==>>", curTop + "");
             if(mToPosition == curTop){
                 return;
             }
-            Log.d("the interpolatedTime", "" + interpolatedTime);
+//            Log.d("the interpolatedTime", "" + interpolatedTime);
             int toTop = (int) (mOriginalOffsetTop - (mOriginalOffsetTop - mToPosition) * interpolatedTime);
-
+            if(toTop <= -mHeaderViewHeight){
+                toTop = -mHeaderViewHeight;
+            }
             int offset = toTop - curTop;
             setOffsetTopAndBottom(offset);
         }
@@ -176,6 +180,16 @@ public abstract class RefreshLayout extends ViewGroup{
         mToPosition = -mHeaderViewHeight;
         mOriginalOffsetTop = getCurTop();
         mContentLy.startAnimation(mAnimateToPosition);
+
+        mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if(null != mRefreshListener){
+                    mRefreshListener.onRefreshOver();
+                    updateStatus(NORMAL_STATUS);
+                }
+            }
+        });
 
     }
 
@@ -225,19 +239,30 @@ public abstract class RefreshLayout extends ViewGroup{
                 mIsBeingDragged = false;
                 break;
             case MotionEvent.ACTION_MOVE:
-                Log.d("action_move", ev.getY() + "");
                 final float y = ev.getY();
                 final float yDiff = y - mLastMotionY;
                 if(!mIsBeingDragged && yDiff > mTouchSlop){
                     mIsBeingDragged = true;
                 }
+                int curTop = getCurTop();
+                if(curTop <= -mHeaderViewHeight && yDiff < 0){
+                    mIsBeingDragged = false;
+                }
                 if(mIsBeingDragged){
-                    setOffsetTopAndBottom((int) (yDiff / 2));
-                    int curTop = getCurTop();
+
+                    float offset = yDiff / 2;
+                    if(offset < 0 && curTop + offset <= -mHeaderViewHeight){
+                        offset = -mHeaderViewHeight - curTop;
+                    }
+
+                    setOffsetTopAndBottom((int) (offset));
+                    if(mRefreshListener != null){
+                       mRefreshListener.onPullDown(y);
+                    }
                     if(mCurStatus != REFRESHING_STATUS){
                         if(curTop >= mNeedRefreshDeltaY){
                             updateStatus(RELEASE_TO_REFRESH_STATUS);
-                        }else if(curTop > 0 && curTop < mNeedRefreshDeltaY){
+                        }else if(curTop > -mHeaderViewHeight && curTop < mNeedRefreshDeltaY){
                             updateStatus(PULL_TO_REFRESH_STATUS);
                         }else{
                             updateStatus(NORMAL_STATUS);
@@ -266,7 +291,7 @@ public abstract class RefreshLayout extends ViewGroup{
 
 
     private void setOffsetTopAndBottom(int offset){
-        Log.d("the offset >>> ", offset + "");
+//        Log.d("the offset >>> ", offset + "");
         mContentLy.offsetTopAndBottom(offset);
     }
 
@@ -285,7 +310,39 @@ public abstract class RefreshLayout extends ViewGroup{
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
         mToPosition = toPostion;
         mOriginalOffsetTop = getCurTop();
+        mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                if(PULL_TO_REFRESH_STATUS == mCurStatus){
+                    updateStatus(NORMAL_STATUS);
+                }else if(RELEASE_TO_REFRESH_STATUS == mCurStatus){
+                    updateStatus(REFRESHING_STATUS);
+                    if(null != mRefreshListener){
+                        mRefreshListener.onRefresh();
+                    }
+                }
+
+            }
+        });
         mContentLy.startAnimation(mAnimateToPosition);
+    }
+
+    private static class SimpleAnimationListener implements Animation.AnimationListener{
+
+        @Override
+        public void onAnimationStart(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationEnd(Animation animation) {
+
+        }
+
+        @Override
+        public void onAnimationRepeat(Animation animation) {
+
+        }
     }
 
 
@@ -301,15 +358,20 @@ public abstract class RefreshLayout extends ViewGroup{
         mCurStatus = status;
         switch (mCurStatus){
             case PULL_TO_REFRESH_STATUS:
+                Log.d("PULL_TO_REFRESH_STATUS", "********");
                 ((ILoadingLayout)mRefreshHeaderView).pulltoRefresh();
                 break;
             case RELEASE_TO_REFRESH_STATUS:
+                Log.d("RELEASE_TO_REFRESH_STATUS", "-------------");
                 ((ILoadingLayout)mRefreshHeaderView).releaseToRefresh();
                 break;
             case REFRESHING_STATUS:
+
+                Log.d("REFRESHING_STATUS", "&&&&&&&&&&&");
                 ((ILoadingLayout)mRefreshHeaderView).refreshing();
                 break;
             case NORMAL_STATUS:
+                Log.d("NORMAL_STATUS", "%%%%%%%%%%%%%%");
                 ((ILoadingLayout)mRefreshHeaderView).normal();
                 break;
             default:
@@ -322,6 +384,11 @@ public abstract class RefreshLayout extends ViewGroup{
        if(mTargetView instanceof ScrollView){
           return mTargetView.getScrollY() <= 0;
        }else if(mTargetView instanceof RecyclerView){
+           RecyclerView recyclerView = (RecyclerView)mTargetView;
+           View child = recyclerView.getChildAt(0);
+           if(null != child){
+               return child.getTop() >= 0;
+           }
           // RecycleView
           return false;
        }else {

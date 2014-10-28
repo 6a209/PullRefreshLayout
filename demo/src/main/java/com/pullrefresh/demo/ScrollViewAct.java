@@ -9,6 +9,7 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import com.pullrefreshlayout.PullRefresScrollView;
+import com.pullrefreshlayout.RefreshLayout;
 
 
 public class ScrollViewAct extends Activity {
@@ -16,7 +17,7 @@ public class ScrollViewAct extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        PullRefresScrollView scrollView = new PullRefresScrollView(this);
+        final PullRefresScrollView scrollView = new PullRefresScrollView(this);
         setContentView(scrollView);
 
         TextView tv = new TextView(this);
@@ -24,6 +25,29 @@ public class ScrollViewAct extends Activity {
         tv.setTextSize(300);
         tv.setText("it is test");
         ((ScrollView)scrollView.getTargetView()).addView(tv);
+
+
+        scrollView.setOnRefreshListener(new RefreshLayout.OnRefreshListener() {
+            @Override
+            public void onPullDown(float y) {
+
+            }
+
+            @Override
+            public void onRefresh() {
+                scrollView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                       scrollView.refreshOver();
+                    }
+                }, 2000);
+            }
+
+            @Override
+            public void onRefreshOver() {
+
+            }
+        });
     }
 
 
