@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<merge
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:paddingTop="5dp"
+    android:layout_height="fill_parent" >
+
+    <FrameLayout
+        android:layout_centerVertical="true"
+        android:layout_width="80dp"
+        android:layout_height="fill_parent"
+        android:paddingLeft="20dp" >
+
+        <ImageView
+            android:layout_gravity="center"
+            android:id="@+id/head_layout_left_arrow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:src="@drawable/pulltorefresh_arrow" />
+
+        <ProgressBar
+            android:layout_gravity="center"
+            style="?android:attr/progressBarStyleSmall"
+            android:id="@+id/head_layout_left_progressbar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="visible" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/head_layout_title"
+        android:layout_width="100.0dip"
+        android:layout_height="25.0dip"
+        android:layout_centerInParent="true"
+        android:gravity="center"
+        android:textColor="#3c3c3c"
+        android:textSize="16sp" />
+
+</merge>

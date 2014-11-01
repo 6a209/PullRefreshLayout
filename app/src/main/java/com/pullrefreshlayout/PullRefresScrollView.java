@@ -19,10 +19,8 @@ public class PullRefresScrollView extends RefreshLayout{
     }
 
     @Override
-    protected View createTargetView() {
+    protected View createRefreshView() {
         return new ScrollView(getContext());
     }
-
-
 
 }

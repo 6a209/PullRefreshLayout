@@ -21,11 +21,14 @@ public class PullRefreshRecyclerView extends RefreshLayout{
     }
 
     @Override
-    protected View createTargetView() {
+    protected View createRefreshView() {
         RecyclerView rv =  new RecyclerView(getContext());
         LinearLayoutManager lm = new LinearLayoutManager(getContext());
         lm.setOrientation(LinearLayoutManager.VERTICAL);
         rv.setLayoutManager(lm);
         return rv;
     }
+
+
+
 }

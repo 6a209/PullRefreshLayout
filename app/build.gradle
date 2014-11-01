@@ -38,8 +38,8 @@ uploadArchives {
             pom.artifactId = 'lib'
             pom.groupId = 'com.pullrefreshlayout'
             pom.version = '0.2-SNAPSHOT'
-            repository(url: "http://maven.mogujie.org/nexus/content/repositories/mitsnapshots/") {
-                authentication(userName: 'mituser', password: 'admin123')
+            repository() {
+                mavenCentral()
             }
         }
     }

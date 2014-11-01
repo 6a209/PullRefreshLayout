@@ -5,7 +5,7 @@ package com.pullrefreshlayout;
  */
 public interface ILoadingLayout {
 
-    public void pulltoRefresh();
+    public void pullToRefresh();
     public void releaseToRefresh();
     public void refreshing();
     public void normal();

@@ -33,7 +33,7 @@ public abstract class RefreshLayout extends ViewGroup{
 
     private static final int DEFAULT_HEAD_HEIGHT = 200;
 
-    View mTargetView;
+    View mRefreshView;
     View mRefreshHeaderView;
 
     LinearLayout mContentLy;
@@ -50,7 +50,7 @@ public abstract class RefreshLayout extends ViewGroup{
     private int mOriginalOffsetTop;
 
     /** the distance of refresh*/
-    private int mNeedRefreshDeltaY = 250;
+    private int mNeedRefreshDeltaY = 120;
 
 
     OnRefreshListener mRefreshListener;
@@ -91,57 +91,33 @@ public abstract class RefreshLayout extends ViewGroup{
         mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
         mContentLy = new LinearLayout(context);
         mContentLy.setOrientation(LinearLayout.VERTICAL);
-        mRefreshHeaderView = new TestHeadView(context);
+        mRefreshHeaderView = (View)createHeaderView();
         mContentLy.addView(mRefreshHeaderView);
-        mTargetView = createTargetView();
-        mContentLy.addView(mTargetView);
-        mTargetView.setBackgroundColor(Color.BLUE);
-
+        mRefreshView = createRefreshView();
+        mContentLy.addView(mRefreshView);
+        mRefreshView.setFadingEdgeLength(0);
+        mRefreshView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         addView(mContentLy);
     }
 
-    public View getTargetView(){
-        return mTargetView;
+    public View getRefreshView(){
+        return mRefreshView;
     }
 
-    protected abstract View createTargetView();
-
-
-    private class TestHeadView extends TextView implements ILoadingLayout{
-
-        public TestHeadView(Context context) {
-            super(context);
-            setBackgroundColor(Color.RED);
-            setHeight(mHeaderViewHeight);
-        }
-
-        @Override
-        public void pulltoRefresh() {
-            setText("Pull to Refresh");
-        }
-
-        @Override
-        public void releaseToRefresh() {
-            setText("release to refresh");
-        }
-
-        @Override
-        public void refreshing() {
-            setText("refreshing");
-        }
-
-        @Override
-        public void normal() {
-            setText("normal");
-        }
+    protected ILoadingLayout createHeaderView(){
+       return new DefaultHeadView(getContext());
     }
+
+    protected abstract View createRefreshView();
+
+
 
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
         int headMeasureSpec = MeasureSpec.makeMeasureSpec(mHeaderViewHeight, MeasureSpec.EXACTLY);
         mRefreshHeaderView.measure(widthMeasureSpec, headMeasureSpec);
-        mTargetView.measure(widthMeasureSpec, heightMeasureSpec);
+        mRefreshView.measure(widthMeasureSpec, heightMeasureSpec);
     }
 
 
@@ -197,18 +173,23 @@ public abstract class RefreshLayout extends ViewGroup{
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev){
         if(!childIsOnTop()){
-            return false;
+            Log.d("the scroll y onInterceptTouchEvent ", mRefreshView.getScrollY() + " " + ev.getAction());
+
+            return super.onInterceptTouchEvent(ev);
         }
 
         final int action = ev.getAction();
 
         switch (action){
             case MotionEvent.ACTION_DOWN:
+                Log.d("onInterceptTouchEvent", "ACTION_DOWN");
                 mLastMotionY = mActionDownY = ev.getY();
+                mIsBeingDragged = false;
                 break;
             case MotionEvent.ACTION_MOVE:
                 final float y = ev.getY();
                 final float yDiff = y - mActionDownY;
+                Log.d("ydiff is ", " " + yDiff);
                 if(yDiff > mTouchSlop){
                     mLastMotionY = y;
                     mIsBeingDragged = true;
@@ -222,7 +203,11 @@ public abstract class RefreshLayout extends ViewGroup{
                 break;
         }
 
-        return mIsBeingDragged;
+        if(mIsBeingDragged){
+            return true;
+        }else{
+            return super.onInterceptTouchEvent(ev);
+        }
     };
 
 
@@ -230,26 +215,33 @@ public abstract class RefreshLayout extends ViewGroup{
     public boolean onTouchEvent(MotionEvent ev){
         final int aciont = ev.getAction();
         if(!childIsOnTop()){
-           return false;
+            Log.d("on Touch Event the scroll y ", mRefreshView.getScrollY() + " ^&*(())");
+            return super.onTouchEvent(ev);
         }
 
         switch (aciont){
             case MotionEvent.ACTION_DOWN:
+                Log.d("action_down", ev.getY() + "");
                 mLastMotionY = mActionDownY = ev.getY();
                 mIsBeingDragged = false;
                 break;
             case MotionEvent.ACTION_MOVE:
                 final float y = ev.getY();
                 final float yDiff = y - mLastMotionY;
+
                 if(!mIsBeingDragged && yDiff > mTouchSlop){
                     mIsBeingDragged = true;
                 }
                 int curTop = getCurTop();
-                if(curTop <= -mHeaderViewHeight && yDiff < 0){
+                if(curTop <= -mHeaderViewHeight && yDiff < 0 ){
                     mIsBeingDragged = false;
                 }
-                if(mIsBeingDragged){
 
+                if(mCurStatus == REFRESHING_STATUS){
+                    mIsBeingDragged = false;
+                }
+                Log.d("is being dragged", mIsBeingDragged + "  >>>>");
+                if(mIsBeingDragged){
                     float offset = yDiff / 2;
                     if(offset < 0 && curTop + offset <= -mHeaderViewHeight){
                         offset = -mHeaderViewHeight - curTop;
@@ -277,12 +269,16 @@ public abstract class RefreshLayout extends ViewGroup{
 
                 Log.d("action_up", ev.getY() + "");
                 handleRelease();
+
                 break;
             default:
                 break;
         }
-
-        return true;
+        if(mIsBeingDragged){
+            return true;
+        }else{
+            return super.onTouchEvent(ev);
+        }
     }
 
     private int getCurTop(){
@@ -359,7 +355,7 @@ public abstract class RefreshLayout extends ViewGroup{
         switch (mCurStatus){
             case PULL_TO_REFRESH_STATUS:
                 Log.d("PULL_TO_REFRESH_STATUS", "********");
-                ((ILoadingLayout)mRefreshHeaderView).pulltoRefresh();
+                ((ILoadingLayout)mRefreshHeaderView).pullToRefresh();
                 break;
             case RELEASE_TO_REFRESH_STATUS:
                 Log.d("RELEASE_TO_REFRESH_STATUS", "-------------");
@@ -380,11 +376,11 @@ public abstract class RefreshLayout extends ViewGroup{
 
     }
 
-    private boolean childIsOnTop(){
-       if(mTargetView instanceof ScrollView){
-          return mTargetView.getScrollY() <= 0;
-       }else if(mTargetView instanceof RecyclerView){
-           RecyclerView recyclerView = (RecyclerView)mTargetView;
+    protected boolean childIsOnTop(){
+       if(mRefreshView instanceof ScrollView){
+           return mRefreshView.getScrollY() <= 0;
+       }else if(mRefreshView instanceof RecyclerView){
+           RecyclerView recyclerView = (RecyclerView) mRefreshView;
            View child = recyclerView.getChildAt(0);
            if(null != child){
                return child.getTop() >= 0;

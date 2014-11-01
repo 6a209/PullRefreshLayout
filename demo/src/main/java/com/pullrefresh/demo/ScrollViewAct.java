@@ -24,7 +24,7 @@ public class ScrollViewAct extends Activity {
         tv.setBackgroundColor(Color.BLACK);
         tv.setTextSize(300);
         tv.setText("it is test");
-        ((ScrollView)scrollView.getTargetView()).addView(tv);
+        ((ScrollView)scrollView.getRefreshView()).addView(tv);
 
 
         scrollView.setOnRefreshListener(new RefreshLayout.OnRefreshListener() {
