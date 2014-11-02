@@ -1,8 +1,6 @@
 <resources>
     <string name="app_name">PullRefreshLayout</string>
-    <string name="pull_to_refresh">下拉刷新</string>
-    <string name="refreshing">刷新中...</string>
-    <string name="release_to_refresh">松手刷新</string>
-    <string name="pull_up_to_get_more">上拉获取更多</string>
-    <string name="release_to_get_more">可以松手了</string>
+    <string name="pull_to_refresh">pull to refresh</string>
+    <string name="refreshing">refreshing...</string>
+    <string name="release_to_refresh">release to refresh</string>
 </resources>

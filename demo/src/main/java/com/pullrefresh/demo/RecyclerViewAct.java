@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.pullrefreshlayout.PullRefreshRecyclerView;
+import com.pullrefreshlayout.RefreshLayout;
 
 /**
  * Created by 6a209 on 14/10/21.
@@ -24,12 +25,32 @@ public class RecyclerViewAct extends Activity{
         }
         MyAdapter adapter = new MyAdapter(datas);
 
-        PullRefreshRecyclerView pullRefreshRecyclerView = new PullRefreshRecyclerView(this);
+        final PullRefreshRecyclerView pullRefreshRecyclerView = new PullRefreshRecyclerView(this);
         RecyclerView recyclerView = (RecyclerView)pullRefreshRecyclerView.getRefreshView();
         recyclerView.setAdapter(adapter);
 
         setContentView(pullRefreshRecyclerView);
+        pullRefreshRecyclerView.setOnRefreshListener(new RefreshLayout.OnRefreshListener() {
+            @Override
+            public void onPullDown(float y) {
 
+            }
+
+            @Override
+            public void onRefresh() {
+                pullRefreshRecyclerView.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                       pullRefreshRecyclerView.refreshOver();
+                    }
+                }, 2000);
+            }
+
+            @Override
+            public void onRefreshOver() {
+
+            }
+        });
     }
 
     public static class ViewHolder extends RecyclerView.ViewHolder {

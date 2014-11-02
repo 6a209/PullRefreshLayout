@@ -3,6 +3,7 @@ package com.pullrefresh.demo;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.ScrollView;
@@ -21,9 +22,11 @@ public class ScrollViewAct extends Activity {
         setContentView(scrollView);
 
         TextView tv = new TextView(this);
+        tv.setGravity(Gravity.CENTER);
+        tv.setPadding(0, 300, 0, 300);
         tv.setBackgroundColor(Color.BLACK);
-        tv.setTextSize(300);
-        tv.setText("it is test");
+        tv.setTextSize(80);
+        tv.setText("Hi \n Android  \n here  \n come \n from \n 6a209");
         ((ScrollView)scrollView.getRefreshView()).addView(tv);
 
 

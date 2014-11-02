@@ -1,10 +1,8 @@
 package com.pullrefreshlayout;
 
 import android.content.Context;
-import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -13,7 +11,6 @@ import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
-import android.widget.TextView;
 
 /**
  * Created by 6a209 on 14/10/19.
@@ -133,13 +130,10 @@ public abstract class RefreshLayout extends ViewGroup{
 
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
-//            Log.d("toPosition ==>>", mToPosition + "");
             final int curTop = getCurTop();
-//            Log.d("curTop ==>>", curTop + "");
             if(mToPosition == curTop){
                 return;
             }
-//            Log.d("the interpolatedTime", "" + interpolatedTime);
             int toTop = (int) (mOriginalOffsetTop - (mOriginalOffsetTop - mToPosition) * interpolatedTime);
             if(toTop <= -mHeaderViewHeight){
                 toTop = -mHeaderViewHeight;
@@ -173,8 +167,6 @@ public abstract class RefreshLayout extends ViewGroup{
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev){
         if(!childIsOnTop()){
-            Log.d("the scroll y onInterceptTouchEvent ", mRefreshView.getScrollY() + " " + ev.getAction());
-
             return super.onInterceptTouchEvent(ev);
         }
 
@@ -182,14 +174,12 @@ public abstract class RefreshLayout extends ViewGroup{
 
         switch (action){
             case MotionEvent.ACTION_DOWN:
-                Log.d("onInterceptTouchEvent", "ACTION_DOWN");
                 mLastMotionY = mActionDownY = ev.getY();
                 mIsBeingDragged = false;
                 break;
             case MotionEvent.ACTION_MOVE:
                 final float y = ev.getY();
                 final float yDiff = y - mActionDownY;
-                Log.d("ydiff is ", " " + yDiff);
                 if(yDiff > mTouchSlop){
                     mLastMotionY = y;
                     mIsBeingDragged = true;
@@ -215,13 +205,11 @@ public abstract class RefreshLayout extends ViewGroup{
     public boolean onTouchEvent(MotionEvent ev){
         final int aciont = ev.getAction();
         if(!childIsOnTop()){
-            Log.d("on Touch Event the scroll y ", mRefreshView.getScrollY() + " ^&*(())");
             return super.onTouchEvent(ev);
         }
 
         switch (aciont){
             case MotionEvent.ACTION_DOWN:
-                Log.d("action_down", ev.getY() + "");
                 mLastMotionY = mActionDownY = ev.getY();
                 mIsBeingDragged = false;
                 break;
@@ -240,7 +228,6 @@ public abstract class RefreshLayout extends ViewGroup{
                 if(mCurStatus == REFRESHING_STATUS){
                     mIsBeingDragged = false;
                 }
-                Log.d("is being dragged", mIsBeingDragged + "  >>>>");
                 if(mIsBeingDragged){
                     float offset = yDiff / 2;
                     if(offset < 0 && curTop + offset <= -mHeaderViewHeight){
@@ -267,7 +254,6 @@ public abstract class RefreshLayout extends ViewGroup{
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
 
-                Log.d("action_up", ev.getY() + "");
                 handleRelease();
 
                 break;
@@ -287,13 +273,11 @@ public abstract class RefreshLayout extends ViewGroup{
 
 
     private void setOffsetTopAndBottom(int offset){
-//        Log.d("the offset >>> ", offset + "");
         mContentLy.offsetTopAndBottom(offset);
     }
 
 
     private void handleRelease(){
-        Log.d("handleRelease", "=====");
         int toPostion;
         if(RELEASE_TO_REFRESH_STATUS == mCurStatus){
             toPostion = 0;
@@ -354,20 +338,16 @@ public abstract class RefreshLayout extends ViewGroup{
         mCurStatus = status;
         switch (mCurStatus){
             case PULL_TO_REFRESH_STATUS:
-                Log.d("PULL_TO_REFRESH_STATUS", "********");
                 ((ILoadingLayout)mRefreshHeaderView).pullToRefresh();
                 break;
             case RELEASE_TO_REFRESH_STATUS:
-                Log.d("RELEASE_TO_REFRESH_STATUS", "-------------");
                 ((ILoadingLayout)mRefreshHeaderView).releaseToRefresh();
                 break;
             case REFRESHING_STATUS:
 
-                Log.d("REFRESHING_STATUS", "&&&&&&&&&&&");
                 ((ILoadingLayout)mRefreshHeaderView).refreshing();
                 break;
             case NORMAL_STATUS:
-                Log.d("NORMAL_STATUS", "%%%%%%%%%%%%%%");
                 ((ILoadingLayout)mRefreshHeaderView).normal();
                 break;
             default:
