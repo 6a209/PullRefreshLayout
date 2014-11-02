@@ -10,13 +10,9 @@ support RecyclerView & ScrollView
 
 ScrollView
 
-[[https://github.com/6a209/PullRefreshLayout/raw/master/scrollview.gif | width = 480px]]
+![Alt Text](https://github.com/6a209/PullRefreshLayout/raw/master/scrollview.gif)
 
-
-RecyclerView
-
-[[https://github.com/6a209/PullRefreshLayout/raw/master/recyclerview.gif | width = 480px]]
-
+![Alt Text](https://github.com/6a209/PullRefreshLayout/raw/master/recyclerview.gif)
 
 
 
