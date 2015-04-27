@@ -6,6 +6,7 @@ import android.os.Bundle;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -29,7 +30,12 @@ public class ScrollViewAct extends Activity {
         tv.setText("Hi \n Android  \n here  \n come \n from \n 6a209");
         ((ScrollView)scrollView.getRefreshView()).addView(tv);
 
-
+        tv.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                scrollView.setToRefreshing();
+            }
+        });
         scrollView.setOnRefreshListener(new RefreshLayout.OnRefreshListener() {
             @Override
             public void onPullDown(float y) {

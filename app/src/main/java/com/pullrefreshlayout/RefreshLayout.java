@@ -9,6 +9,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
@@ -19,7 +20,7 @@ import android.widget.ScrollView;
  *
  *
  */
-public abstract class RefreshLayout extends ViewGroup{
+public abstract class RefreshLayout extends FrameLayout{
 
     private static final String TAG = "PullRefreshLayout";
 
@@ -94,6 +95,7 @@ public abstract class RefreshLayout extends ViewGroup{
         mContentLy.addView(mRefreshView);
         mRefreshView.setFadingEdgeLength(0);
         mRefreshView.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        mCurStatus = NORMAL_STATUS;
         addView(mContentLy);
     }
 
@@ -143,6 +145,27 @@ public abstract class RefreshLayout extends ViewGroup{
         }
     };
 
+    public void setToRefreshing(){
+        if(NORMAL_STATUS != mCurStatus){
+            return;
+        }
+        mAnimateToPosition.reset();
+        mAnimateToPosition.setDuration(mMediumAnimationDuration);
+        mToPosition = 0;
+        mOriginalOffsetTop = getCurTop();
+        mContentLy.startAnimation(mAnimateToPosition);
+        mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
+            @Override
+            public void onAnimationEnd(Animation animation){
+
+                updateStatus(REFRESHING_STATUS);
+                if(null != mRefreshListener){
+                    mRefreshListener.onRefresh();
+                }
+            }
+        });
+    }
+
 
     public void refreshOver(){
         mAnimateToPosition.reset();
@@ -154,9 +177,9 @@ public abstract class RefreshLayout extends ViewGroup{
         mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
             @Override
             public void onAnimationEnd(Animation animation) {
+                updateStatus(NORMAL_STATUS);
                 if(null != mRefreshListener){
                     mRefreshListener.onRefreshOver();
-                    updateStatus(NORMAL_STATUS);
                 }
             }
         });
@@ -184,7 +207,6 @@ public abstract class RefreshLayout extends ViewGroup{
                     mLastMotionY = y;
                     mIsBeingDragged = true;
                 }
-
                 break;
 
             case MotionEvent.ACTION_UP:
@@ -344,7 +366,6 @@ public abstract class RefreshLayout extends ViewGroup{
                 ((ILoadingLayout)mRefreshHeaderView).releaseToRefresh();
                 break;
             case REFRESHING_STATUS:
-
                 ((ILoadingLayout)mRefreshHeaderView).refreshing();
                 break;
             case NORMAL_STATUS:
