@@ -28,7 +28,10 @@ public abstract class RefreshLayout extends FrameLayout{
     private static final int REFRESHING_STATUS = 0x02;
     private static final int NORMAL_STATUS = 0x03;
 
+    private static final int RELEASE_TO_NORMAL = 0x0;
+
     private static final int DEFAULT_HEAD_HEIGHT = 200;
+
 
     View mRefreshView;
     View mRefreshHeaderView;
@@ -168,6 +171,10 @@ public abstract class RefreshLayout extends FrameLayout{
 
 
     public void refreshOver(final Object obj){
+        if(REFRESHING_STATUS != mCurStatus){
+            return;
+        }
+        updateStatus(RELEASE_TO_NORMAL);
         mAnimateToPosition.reset();
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
         mToPosition = -mHeaderViewHeight;
@@ -304,6 +311,7 @@ public abstract class RefreshLayout extends FrameLayout{
             toPostion = 0;
         }else if(PULL_TO_REFRESH_STATUS == mCurStatus){
             toPostion = -mHeaderViewHeight;
+            updateStatus(RELEASE_TO_NORMAL);
         }else {
             return;
         }
@@ -314,7 +322,7 @@ public abstract class RefreshLayout extends FrameLayout{
         mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
             @Override
             public void onAnimationEnd(Animation animation) {
-                if(PULL_TO_REFRESH_STATUS == mCurStatus){
+                if(RELEASE_TO_NORMAL == mCurStatus){
                     updateStatus(NORMAL_STATUS);
                 }else if(RELEASE_TO_REFRESH_STATUS == mCurStatus){
                     updateStatus(REFRESHING_STATUS);
