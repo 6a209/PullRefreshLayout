@@ -6,7 +6,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
 import android.widget.FrameLayout;
@@ -72,7 +71,7 @@ public abstract class RefreshLayout extends FrameLayout{
          * i suggest in this callback refresh the view data;
          *
          */
-        void onRefreshOver();
+        void onRefreshOver(Object obj);
     }
 
     public void setOnRefreshListener(OnRefreshListener listener){
@@ -146,9 +145,10 @@ public abstract class RefreshLayout extends FrameLayout{
     };
 
     public void setToRefreshing(){
-        if(NORMAL_STATUS != mCurStatus){
+        if(NORMAL_STATUS != mCurStatus) {
             return;
         }
+        updateStatus(PULL_TO_REFRESH_STATUS);
         mAnimateToPosition.reset();
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
         mToPosition = 0;
@@ -167,7 +167,7 @@ public abstract class RefreshLayout extends FrameLayout{
     }
 
 
-    public void refreshOver(){
+    public void refreshOver(final Object obj){
         mAnimateToPosition.reset();
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
         mToPosition = -mHeaderViewHeight;
@@ -179,11 +179,10 @@ public abstract class RefreshLayout extends FrameLayout{
             public void onAnimationEnd(Animation animation) {
                 updateStatus(NORMAL_STATUS);
                 if(null != mRefreshListener){
-                    mRefreshListener.onRefreshOver();
+                    mRefreshListener.onRefreshOver(obj);
                 }
             }
         });
-
     }
 
 
