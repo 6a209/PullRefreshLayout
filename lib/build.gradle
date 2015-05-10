@@ -1,0 +1,144 @@
+apply plugin: 'android-library'
+apply plugin: 'com.jfrog.bintray'
+//apply plugin: 'maven'
+apply plugin: 'com.github.dcendents.android-maven'
+
+
+
+android {
+    compileSdkVersion 20
+    buildToolsVersion "20.0.0"
+
+    defaultConfig {
+        minSdkVersion 15
+        targetSdkVersion 20
+        versionCode 1
+        versionName "1.0"
+    }
+    buildTypes {
+        release {
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+
+repositories {
+    mavenCentral()
+}
+
+
+dependencies {
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile 'com.android.support:recyclerview-v7:22.0.0'
+}
+
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            pom.artifactId = 'lib'
+            pom.groupId = 'com.pullrefreshlayout'
+            pom.version = '0.3.0-SNAPSHOT'
+            repository() {
+                mavenCentral()
+            }
+        }
+    }
+}
+
+apply plugin: 'com.jfrog.bintray'
+apply plugin: 'maven-publish'
+
+
+group = GROUP
+version = VERSION
+
+def pomConfig = {
+    licenses {
+        license {
+            name LICENSES_NAME
+            url LICENSES_URL
+        }
+    }
+
+    developers {
+        developer {
+            id DEVELOPER_ID
+            name DEVELOPER_NAME
+            email DEVELOPER_EMAIL
+        }
+    }
+}
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                name NAME
+                url SITE_URL
+                licenses {
+                    license {
+                        name LICENSES_NAME 
+                    }
+                }
+                developers {
+                    developer {
+                        id DEVELOPER_ID
+                        name DEVELOPER_NAME
+                        email DEVELOPER_EMAIL
+                    }
+                }
+                scm {
+                    connection GIT_URL
+                    developerConnection GIT_URL
+                    url SITE_URL
+                }
+            }
+        }
+    }
+}
+
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+
+artifacts {
+    archives javadocJar
+    archives sourcesJar
+}
+
+bintray {
+    user = BINTRAY_USER
+    key = BINTRAY_APIKEY
+    configurations = ['archives']
+    pkg {
+        repo = "maven"
+        name = 'pullrefreshlayout'               // project name in jcenter
+        websiteUrl = SITE_URL
+        vcsUrl = GIT_URL
+        licenses = LICENSES_NAME
+        publish = true
+        version {
+            attributes = ['gradle-plugin': 'com.li6a209:pullrefreshlayout']
+        }
+    }
+}
+
+
+
+
+
