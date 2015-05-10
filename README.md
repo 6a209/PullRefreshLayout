@@ -6,6 +6,11 @@ a pull down to Refresh Layout .
 support RecyclerView & ScrollView
 
 ---------------------
+
+## how to use 
+
+``` compile 'com.pullrefreshlayout:lib:0.5.3@aar ```
+
 ### demo
 
 RecyclerView 
