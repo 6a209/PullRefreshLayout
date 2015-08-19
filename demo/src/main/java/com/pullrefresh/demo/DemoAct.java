@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.util.Log;
 
 /**
  * Created by 6a209 on 14/10/29.
@@ -14,6 +15,7 @@ public class DemoAct extends Activity{
     public void onCreate(Bundle bundle){
         super.onCreate(bundle);
         setContentView(R.layout.activity_main);
+        Log.e("DemoAct", getClassLoader().toString());
     }
 
 

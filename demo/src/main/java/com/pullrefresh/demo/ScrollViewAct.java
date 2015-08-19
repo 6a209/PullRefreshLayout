@@ -3,6 +3,7 @@ package com.pullrefresh.demo;
 import android.app.Activity;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.support.v4.view.ViewPager;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -21,6 +22,7 @@ public class ScrollViewAct extends Activity {
         super.onCreate(savedInstanceState);
         final PullRefresScrollView scrollView = new PullRefresScrollView(this);
         setContentView(scrollView);
+        ViewPager viewPager = new ViewPager(this);
 
         TextView tv = new TextView(this);
         tv.setGravity(Gravity.CENTER);
@@ -47,13 +49,13 @@ public class ScrollViewAct extends Activity {
                 scrollView.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                       scrollView.refreshOver();
+                       scrollView.refreshOver(null);
                     }
                 }, 2000);
             }
 
             @Override
-            public void onRefreshOver() {
+            public void onRefreshOver(Object obj) {
 
             }
         });

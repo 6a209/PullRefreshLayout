@@ -6,6 +6,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 import android.widget.TextView;
+import android.util.Log;
 
 import com.pullrefreshlayout.PullRefreshRecyclerView;
 import com.pullrefreshlayout.RefreshLayout;
@@ -19,17 +20,20 @@ public class RecyclerViewAct extends Activity{
     public void onCreate(Bundle bundle){
         super.onCreate(bundle);
 
+        Log.e("DemoAct", getClassLoader().toString());
         String [] datas = new String[50];
         for(int i = 0; i < 50; i++){
            datas[i] = "it is test data " + i;
         }
         MyAdapter adapter = new MyAdapter(datas);
 
-        final PullRefreshRecyclerView pullRefreshRecyclerView = new PullRefreshRecyclerView(this);
+        setContentView(R.layout.recycler);
+
+        final PullRefreshRecyclerView pullRefreshRecyclerView = (PullRefreshRecyclerView)findViewById(R.id.recycler);
         RecyclerView recyclerView = (RecyclerView)pullRefreshRecyclerView.getRefreshView();
         recyclerView.setAdapter(adapter);
 
-        setContentView(pullRefreshRecyclerView);
+//        setContentView(pullRefreshRecyclerView);
         pullRefreshRecyclerView.setOnRefreshListener(new RefreshLayout.OnRefreshListener() {
             @Override
             public void onPullDown(float y) {
@@ -41,15 +45,17 @@ public class RecyclerViewAct extends Activity{
                 pullRefreshRecyclerView.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                       pullRefreshRecyclerView.refreshOver();
+                       pullRefreshRecyclerView.refreshOver(null);
                     }
                 }, 2000);
             }
 
             @Override
-            public void onRefreshOver() {
+            public void onRefreshOver(Object obj) {
 
             }
+
+
         });
     }
 

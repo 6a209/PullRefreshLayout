@@ -4,7 +4,7 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="fill_parent"
     android:paddingTop="5dp"
-    android:layout_height="fill_parent" >
+    android:layout_height="100dp" >
 
     <FrameLayout
         android:layout_centerVertical="true"
@@ -28,9 +28,10 @@
             android:visibility="visible" />
     </FrameLayout>
 
+    <!--android:layout_width="100.0dip"-->
     <TextView
         android:id="@+id/head_layout_title"
-        android:layout_width="100.0dip"
+        android:layout_width="wrap_content"
         android:layout_height="25.0dip"
         android:layout_centerInParent="true"
         android:gravity="center"

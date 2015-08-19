@@ -10,16 +10,21 @@ android {
     buildToolsVersion "20.0.0"
 
     defaultConfig {
-        minSdkVersion 15
         targetSdkVersion 20
+        minSdkVersion 15
         versionCode 1
         versionName "1.0"
     }
+        
     buildTypes {
         release {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+    lintOptions {
+        abortOnError false
+    }
+
 }
 
 
@@ -108,7 +113,7 @@ task sourcesJar(type: Jar) {
 
 task javadoc(type: Javadoc) {
     source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+    //classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {

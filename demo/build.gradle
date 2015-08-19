@@ -2,7 +2,7 @@ apply plugin: 'com.android.application'
 
 android {
     compileSdkVersion 20
-    buildToolsVersion "20.0.0"
+    buildToolsVersion "21.1.2"
 
     defaultConfig {
         applicationId "com.pullrefresh.demo"
@@ -18,7 +18,14 @@ android {
     }
 }
 
+
+
+repositories {
+    mavenCentral()
+}
+
+
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    provided fileTree(dir: 'libs', include: ['*.jar'])
     compile project(':lib')
 }

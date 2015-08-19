@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+
+
+    <TextView
+        android:background="#3c3c3c"
+        android:text="Demo"
+        android:id="@+id/text"
+        android:textSize="36sp"
+        android:textColor="#FF0000"
+        android:layout_width="match_parent"
+        android:layout_height="150dp" />
+
+    <TextView
+        android:text="Foot"
+        android:layout_alignParentBottom="true"
+        android:textSize="36sp"
+        android:id="@+id/foot"
+        android:layout_width="match_parent"
+        android:layout_height="100dp" />
+
+    <com.pullrefreshlayout.PullRefreshRecyclerView
+        android:background="#00ff00"
+        android:id="@+id/recycler"
+        android:layout_above="@id/foot"
+        android:layout_below="@id/text"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        />
+
+</RelativeLayout>
