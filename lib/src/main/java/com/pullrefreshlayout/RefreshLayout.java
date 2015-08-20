@@ -1,15 +1,16 @@
 package com.pullrefreshlayout;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.Transformation;
-import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.ScrollView;
 
 /**
@@ -19,7 +20,7 @@ import android.widget.ScrollView;
  *
  *
  */
-public abstract class RefreshLayout extends FrameLayout{
+public abstract class RefreshLayout extends ViewGroup{
 
     private static final String TAG = "PullRefreshLayout";
 
@@ -36,7 +37,7 @@ public abstract class RefreshLayout extends FrameLayout{
     View mRefreshView;
     View mRefreshHeaderView;
 
-    LinearLayout mContentLy;
+//    LinearLayout mContentLy;
 
     private int mCurStatus;
     private float mLastMotionY;
@@ -48,6 +49,7 @@ public abstract class RefreshLayout extends FrameLayout{
 
     private int mToPosition;
     private int mOriginalOffsetTop;
+    private int mLayoutOffsetTop = 0;
 
     /** the distance of refresh*/
     private int mNeedRefreshDeltaY = 120;
@@ -89,16 +91,14 @@ public abstract class RefreshLayout extends FrameLayout{
         super(context, attrs);
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
-        mContentLy = new LinearLayout(context);
-        mContentLy.setOrientation(LinearLayout.VERTICAL);
         mRefreshHeaderView = (View)createHeaderView();
-        mContentLy.addView(mRefreshHeaderView);
+        mRefreshHeaderView.setBackgroundColor(Color.parseColor("#FF0000"));
+        addView(mRefreshHeaderView);
         mRefreshView = createRefreshView();
-        mContentLy.addView(mRefreshView);
+        addView(mRefreshView);
         mRefreshView.setFadingEdgeLength(0);
         mRefreshView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         mCurStatus = NORMAL_STATUS;
-        addView(mContentLy);
     }
 
     public View getRefreshView(){
@@ -116,16 +116,45 @@ public abstract class RefreshLayout extends FrameLayout{
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        int headMeasureSpec = MeasureSpec.makeMeasureSpec(mHeaderViewHeight, MeasureSpec.EXACTLY);
-        mRefreshHeaderView.measure(widthMeasureSpec, headMeasureSpec);
-        mRefreshView.measure(widthMeasureSpec, heightMeasureSpec);
+//        Log.d("onMeasure", "onMeasure");
+//        Log.d("heightMode", MeasureSpec.getMode(heightMeasureSpec) + "");
+//        Log.d("heightSize", MeasureSpec.getSize(heightMeasureSpec) + "");
+//        int headHeightSpec = MeasureSpec.makeMeasureSpec(mHeaderViewHeight, MeasureSpec.getMode(heightMeasureSpec));
+        measureChildWithMargins(mRefreshHeaderView, widthMeasureSpec, 0, heightMeasureSpec, 0);
+        MarginLayoutParams headLp = (MarginLayoutParams)mRefreshHeaderView.getLayoutParams();
+        mHeaderViewHeight = mRefreshHeaderView.getMeasuredHeight() + headLp.bottomMargin + headLp.topMargin;
+//        Log.d("the head height is => ", mHeaderViewHeight + "");
+
+
+        MarginLayoutParams contentLp = (MarginLayoutParams)mRefreshView.getLayoutParams();
+        int contentWidthSpec = getChildMeasureSpec(widthMeasureSpec, getPaddingLeft() + getPaddingRight() + contentLp.leftMargin + contentLp.rightMargin, contentLp.width);
+        int contentHeightSpec = getChildMeasureSpec(heightMeasureSpec, getPaddingBottom() + getPaddingTop() + contentLp.topMargin + contentLp.bottomMargin, contentLp.height);
+
+//        Log.d("heightSize", MeasureSpec.getSize(contentHeightSpec) + "");
+        mRefreshView.measure(contentWidthSpec, contentHeightSpec);
     }
 
 
     @Override
     protected void onLayout(boolean changed, int l, int t, int r, int b) {
-        int headHeight = mHeaderViewHeight;
-        mContentLy.layout(l, t - headHeight, r, b);
+        Log.d("onLayout", "onLayout");
+
+
+        MarginLayoutParams headLp = (MarginLayoutParams)mRefreshHeaderView.getLayoutParams();
+        int left = getPaddingLeft() + headLp.leftMargin;
+        int top = getPaddingTop() + headLp.topMargin - mHeaderViewHeight + mLayoutOffsetTop;
+        int right = left + mRefreshHeaderView.getMeasuredWidth();
+        int bottom = top + mRefreshHeaderView.getMeasuredHeight();
+
+        mRefreshHeaderView.layout(left, top, right, bottom);
+
+
+        MarginLayoutParams contentLp = (MarginLayoutParams)mRefreshView.getLayoutParams();
+        left = getPaddingLeft() + contentLp.leftMargin;
+        top = contentLp.topMargin + mLayoutOffsetTop;
+        right = left + mRefreshView.getMeasuredWidth();
+        bottom = top + mRefreshView.getMeasuredHeight();
+        mRefreshView.layout(left, top, right, bottom);
     }
 
 
@@ -134,6 +163,7 @@ public abstract class RefreshLayout extends FrameLayout{
 
         @Override
         protected void applyTransformation(float interpolatedTime, Transformation t) {
+            Log.d("Animation", "in=> Animation");
             final int curTop = getCurTop();
             if(mToPosition == curTop){
                 return;
@@ -156,7 +186,7 @@ public abstract class RefreshLayout extends FrameLayout{
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
         mToPosition = 0;
         mOriginalOffsetTop = getCurTop();
-        mContentLy.startAnimation(mAnimateToPosition);
+        startAnimation(mAnimateToPosition);
         mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
             @Override
             public void onAnimationEnd(Animation animation){
@@ -179,7 +209,7 @@ public abstract class RefreshLayout extends FrameLayout{
         mAnimateToPosition.setDuration(mMediumAnimationDuration);
         mToPosition = -mHeaderViewHeight;
         mOriginalOffsetTop = getCurTop();
-        mContentLy.startAnimation(mAnimateToPosition);
+        startAnimation(mAnimateToPosition);
 
         mAnimateToPosition.setAnimationListener(new SimpleAnimationListener(){
             @Override
@@ -195,6 +225,7 @@ public abstract class RefreshLayout extends FrameLayout{
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev){
+        Log.d("on intercept ", "****");
         if(!childIsOnTop()){
             return super.onInterceptTouchEvent(ev);
         }
@@ -217,6 +248,8 @@ public abstract class RefreshLayout extends FrameLayout{
 
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
+
+                Log.d("******", "up or cancel");
                 mIsBeingDragged = false;
                 break;
         }
@@ -231,6 +264,7 @@ public abstract class RefreshLayout extends FrameLayout{
 
     @Override
     public boolean onTouchEvent(MotionEvent ev){
+
         final int aciont = ev.getAction();
         if(!childIsOnTop()){
             return super.onTouchEvent(ev);
@@ -238,6 +272,7 @@ public abstract class RefreshLayout extends FrameLayout{
 
         switch (aciont){
             case MotionEvent.ACTION_DOWN:
+                Log.d("on touche down", "****");
                 mLastMotionY = mActionDownY = ev.getY();
                 mIsBeingDragged = false;
                 break;
@@ -245,10 +280,15 @@ public abstract class RefreshLayout extends FrameLayout{
                 final float y = ev.getY();
                 final float yDiff = y - mLastMotionY;
 
+
+                Log.d("y && ydiff", y + " __ " + yDiff);
+                Log.d("mIsBeginDra" , mIsBeingDragged + "");
+
                 if(!mIsBeingDragged && yDiff > mTouchSlop){
                     mIsBeingDragged = true;
                 }
                 int curTop = getCurTop();
+                Log.d("curTop", curTop + "");
                 if(curTop <= -mHeaderViewHeight && yDiff < 0 ){
                     mIsBeingDragged = false;
                 }
@@ -257,11 +297,13 @@ public abstract class RefreshLayout extends FrameLayout{
                     mIsBeingDragged = false;
                 }
                 if(mIsBeingDragged){
+
                     float offset = yDiff / 2;
                     if(offset < 0 && curTop + offset <= -mHeaderViewHeight){
                         offset = -mHeaderViewHeight - curTop;
                     }
 
+                    Log.d("isDragged", offset + "");
                     setOffsetTopAndBottom((int) (offset));
                     if(mRefreshListener != null){
                        mRefreshListener.onPullDown(y);
@@ -282,6 +324,7 @@ public abstract class RefreshLayout extends FrameLayout{
             case MotionEvent.ACTION_UP:
             case MotionEvent.ACTION_CANCEL:
 
+                Log.d("on touche up or cancel", "****");
                 handleRelease();
 
                 break;
@@ -296,12 +339,17 @@ public abstract class RefreshLayout extends FrameLayout{
     }
 
     private int getCurTop(){
-        return mContentLy.getTop();
+        return mRefreshHeaderView.getTop();
     }
 
 
+
     private void setOffsetTopAndBottom(int offset){
-        mContentLy.offsetTopAndBottom(offset);
+//        offsetTopAndBottom(offset);
+        mLayoutOffsetTop = mHeaderViewHeight + getCurTop();
+        mRefreshHeaderView.offsetTopAndBottom(offset);
+        mRefreshView.offsetTopAndBottom(offset);
+        invalidate();
     }
 
 
@@ -333,7 +381,7 @@ public abstract class RefreshLayout extends FrameLayout{
 
             }
         });
-        mContentLy.startAnimation(mAnimateToPosition);
+        startAnimation(mAnimateToPosition);
     }
 
     private static class SimpleAnimationListener implements Animation.AnimationListener{
@@ -398,5 +446,42 @@ public abstract class RefreshLayout extends FrameLayout{
        }else {
            return false;
        }
+    }
+
+
+
+
+    @Override
+    protected boolean checkLayoutParams(ViewGroup.LayoutParams p) {
+        return p instanceof LayoutParams;
+    }
+    @Override
+    protected ViewGroup.LayoutParams generateDefaultLayoutParams() {
+        return new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+    }
+    @Override
+    protected ViewGroup.LayoutParams generateLayoutParams(ViewGroup.LayoutParams p) {
+        return new LayoutParams(p);
+    }
+    @Override
+    public ViewGroup.LayoutParams generateLayoutParams(AttributeSet attrs) {
+        return new LayoutParams(getContext(), attrs);
+    }
+
+
+
+    public static class LayoutParams extends MarginLayoutParams {
+        public LayoutParams(Context c, AttributeSet attrs) {
+            super(c, attrs);
+        }
+        public LayoutParams(int width, int height) {
+            super(width, height);
+        }
+        public LayoutParams(MarginLayoutParams source) {
+            super(source);
+        }
+        public LayoutParams(ViewGroup.LayoutParams source) {
+            super(source);
+        }
     }
 }

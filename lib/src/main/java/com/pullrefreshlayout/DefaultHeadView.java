@@ -4,6 +4,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
@@ -31,6 +32,7 @@ public class DefaultHeadView extends RelativeLayout implements ILoadingLayout{
         mDownToUpAnim.setFillAfter(true);
         mUpToDownAnim.setFillAfter(true);
         LayoutInflater.from(context).inflate(R.layout.head_layout, this);
+        setLayoutParams(new RefreshLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 200));
         mLeftProgress = findViewById(R.id.head_layout_left_progressbar);
         mLeftImage = (ImageView)findViewById(R.id.head_layout_left_arrow);
         mTitle = (TextView)findViewById(R.id.head_layout_title);
