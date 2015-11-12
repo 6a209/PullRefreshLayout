@@ -33,6 +33,9 @@ public abstract class RefreshLayout extends ViewGroup{
 
     private static final int DEFAULT_HEAD_HEIGHT = 200;
 
+    private static final int INVALID_POINTER = -1;
+    private int mActivePointerId = INVALID_POINTER;
+
 
     View mRefreshView;
     View mRefreshHeaderView;
@@ -92,7 +95,6 @@ public abstract class RefreshLayout extends ViewGroup{
         mTouchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         mMediumAnimationDuration = getResources().getInteger(android.R.integer.config_mediumAnimTime);
         mRefreshHeaderView = (View)createHeaderView();
-        mRefreshHeaderView.setBackgroundColor(Color.parseColor("#FF0000"));
         addView(mRefreshHeaderView);
         mRefreshView = createRefreshView();
         addView(mRefreshView);
@@ -116,21 +118,16 @@ public abstract class RefreshLayout extends ViewGroup{
     @Override
     public void onMeasure(int widthMeasureSpec, int heightMeasureSpec){
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-//        Log.d("onMeasure", "onMeasure");
-//        Log.d("heightMode", MeasureSpec.getMode(heightMeasureSpec) + "");
-//        Log.d("heightSize", MeasureSpec.getSize(heightMeasureSpec) + "");
-//        int headHeightSpec = MeasureSpec.makeMeasureSpec(mHeaderViewHeight, MeasureSpec.getMode(heightMeasureSpec));
+
         measureChildWithMargins(mRefreshHeaderView, widthMeasureSpec, 0, heightMeasureSpec, 0);
         MarginLayoutParams headLp = (MarginLayoutParams)mRefreshHeaderView.getLayoutParams();
         mHeaderViewHeight = mRefreshHeaderView.getMeasuredHeight() + headLp.bottomMargin + headLp.topMargin;
-//        Log.d("the head height is => ", mHeaderViewHeight + "");
 
 
         MarginLayoutParams contentLp = (MarginLayoutParams)mRefreshView.getLayoutParams();
         int contentWidthSpec = getChildMeasureSpec(widthMeasureSpec, getPaddingLeft() + getPaddingRight() + contentLp.leftMargin + contentLp.rightMargin, contentLp.width);
         int contentHeightSpec = getChildMeasureSpec(heightMeasureSpec, getPaddingBottom() + getPaddingTop() + contentLp.topMargin + contentLp.bottomMargin, contentLp.height);
 
-//        Log.d("heightSize", MeasureSpec.getSize(contentHeightSpec) + "");
         mRefreshView.measure(contentWidthSpec, contentHeightSpec);
     }
 
@@ -236,6 +233,8 @@ public abstract class RefreshLayout extends ViewGroup{
             case MotionEvent.ACTION_DOWN:
                 mLastMotionY = mActionDownY = ev.getY();
                 mIsBeingDragged = false;
+                mActivePointerId = ev.getPointerId(0);
+
                 break;
             case MotionEvent.ACTION_MOVE:
                 final float y = ev.getY();
@@ -270,14 +269,24 @@ public abstract class RefreshLayout extends ViewGroup{
             return super.onTouchEvent(ev);
         }
 
-        switch (aciont){
+        switch (aciont & MotionEvent.ACTION_MASK){
+
+            case MotionEvent.ACTION_POINTER_DOWN:
+                int index = ev.getActionIndex();
+                mLastMotionY = ev.getY(index);
+                mActivePointerId = ev.getPointerId(index);
+                break;
+
             case MotionEvent.ACTION_DOWN:
                 Log.d("on touche down", "****");
-                mLastMotionY = mActionDownY = ev.getY();
+                mLastMotionY = ev.getY();
                 mIsBeingDragged = false;
+                mActivePointerId = ev.getPointerId(0);
+
                 break;
             case MotionEvent.ACTION_MOVE:
-                final float y = ev.getY();
+                index = ev.findPointerIndex(mActivePointerId);
+                final float y = ev.getY(index);
                 final float yDiff = y - mLastMotionY;
 
 
@@ -325,6 +334,7 @@ public abstract class RefreshLayout extends ViewGroup{
             case MotionEvent.ACTION_CANCEL:
 
                 Log.d("on touche up or cancel", "****");
+                mActivePointerId = INVALID_POINTER;
                 handleRelease();
 
                 break;
