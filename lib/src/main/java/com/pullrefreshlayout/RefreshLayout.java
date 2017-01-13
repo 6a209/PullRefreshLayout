@@ -356,9 +356,9 @@ public abstract class RefreshLayout extends ViewGroup{
 
     private void setOffsetTopAndBottom(int offset){
 //        offsetTopAndBottom(offset);
-        mLayoutOffsetTop = mHeaderViewHeight + getCurTop();
         mRefreshHeaderView.offsetTopAndBottom(offset);
         mRefreshView.offsetTopAndBottom(offset);
+        mLayoutOffsetTop = mHeaderViewHeight + getCurTop();
         invalidate();
     }
 
